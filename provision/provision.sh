@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 common_packages=(
   expect
 )
@@ -13,6 +15,11 @@ app_packages=(
 
 main() {
   install_packages "$1"
+  if [[ "$1" == "balancer" ]]; then
+    setup_haproxy
+  elif [[ "$1" == "app" ]]; then
+    setup_app
+  fi
 }
 
 install_packages() {
@@ -27,6 +34,32 @@ install_packages() {
     install ${common_packages[@]} $other
     run
 END
+}
+
+setup_haproxy() {
+  cp /vagrant/provision/haproxy.cfg /etc/haproxy/haproxy.cfg
+  service haproxy start
+  chkconfig haproxy on
+}
+
+setup_app() {
+  [ -d /opt/app ] || mkdir /opt/app
+  [ -d /var/run/app ] || mkdir /var/run/app
+  service app stop 2>/dev/null || true
+  chown vagrant:vagrant /opt/app /var/run/app
+  sudo -u vagrant rsync -a --del /vagrant/app/ /opt/app/
+
+  cd /opt/app
+  pip install virtualenv
+  sudo su vagrant -c '
+    virtualenv env
+    . env/bin/activate
+    pip install -r requirements.txt
+  '
+
+  cp /vagrant/provision/service /etc/init.d/app
+  chkconfig --add app
+  service app start
 }
 
 main "$@"
