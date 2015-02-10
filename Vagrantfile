@@ -3,8 +3,8 @@ required_plugins.each do |plugin|
   system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
 end
 
-nBalancers = 1
-nApps = 1
+nBalancers = ENV['n_balancers'].to_i
+nApps = ENV['n_apps'].to_i
 
 Vagrant.configure('2') do |config|
   config.vm.box = 'centos-6.6'
