@@ -49,13 +49,8 @@ setup_app() {
   chown vagrant:vagrant /opt/app /var/run/app
   sudo -u vagrant rsync -a --del /vagrant/app/ /opt/app/
 
-  cd /opt/app
   pip install virtualenv
-  sudo su vagrant -c '
-    virtualenv env
-    . env/bin/activate
-    pip install -r requirements.txt
-  '
+  pip install flask
 
   cp /vagrant/provision/service /etc/init.d/app
   chkconfig --add app

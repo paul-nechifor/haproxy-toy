@@ -20,5 +20,5 @@ def vagrant_destroy(n_balancers='1', n_apps='1'):
     local("""
         export n_balancers=%s
         export n_apps=%s
-        vagrant destroy
+        vagrant destroy -f
     """ % (n_balancers, n_apps))

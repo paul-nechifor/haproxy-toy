@@ -9,8 +9,7 @@ name="app"
 parent_dir="/opt/$name"
 pidfile="/var/run/${name}/pid"
 lockfile="/var/lock/subsys/$name"
-pre=". $parent_dir/env/bin/activate"
-incantation="$pre && python $parent_dir/app.py $pidfile >/dev/null 2>&1 &"
+incantation="python $parent_dir/app.py $pidfile >/dev/null 2>&1 &"
 user="vagrant"
 
 start() {
