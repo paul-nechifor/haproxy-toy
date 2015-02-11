@@ -2,9 +2,6 @@
 
 set -e
 
-common_packages=(
-  expect
-)
 balancer_packages=(
   haproxy
 )
@@ -15,31 +12,23 @@ app_packages=(
 
 main() {
   install_packages "$1"
-  if [[ "$1" == "balancer" ]]; then
-    setup_balancer
-  elif [[ "$1" == "app" ]]; then
+  if [[ "$1" == "app" ]]; then
     setup_app
   fi
 }
 
 install_packages() {
-  local other=
+  local packages=
   if [[ "$1" == "balancer" ]]; then
-    other="${balancer_packages[@]}"
+    packages="${balancer_packages[@]}"
   elif [[ "$1" == "app" ]]; then
-    other="${app_packages[@]}"
+    packages="${app_packages[@]}"
   fi
   yum -y shell <<END
     update
-    install ${common_packages[@]} $other
+    install $packages
     run
 END
-}
-
-setup_balancer() {
-  cp /vagrant/provision/haproxy.cfg /etc/haproxy/haproxy.cfg
-  service haproxy start
-  chkconfig haproxy on
 }
 
 setup_app() {

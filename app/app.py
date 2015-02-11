@@ -1,17 +1,17 @@
 #!/usr/bin/env python2
 
 import os
-import sys
 
 from flask import Flask
 
 
 app = Flask(__name__)
+responder = os.environ['host'] + ':' + os.environ['port']
 
 
 @app.route('/')
 def index():
-    return 'Main page.'
+    return responder
 
 
 @app.route('/pow/<int:x>/<int:y>')
@@ -19,11 +19,9 @@ def pow(x, y):
     s = str(x ** y)
     n = 80
     parts = [s[i:i+n] for i in xrange(0, len(s), n)]
-    return '\n'.join(parts)
+    return responder + '\n' + '\n'.join(parts)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        file(sys.argv[1], 'w').write(str(os.getpid()))
-
-    app.run(host='0.0.0.0', port=int(os.environ['PORT']))
+    file(os.environ['pidfile'], 'w').write(str(os.getpid()))
+    app.run(host=os.environ['host'], port=int(os.environ['port']))

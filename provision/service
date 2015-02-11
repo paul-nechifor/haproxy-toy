@@ -5,11 +5,12 @@
 
 . /etc/init.d/functions
 
-name="app{NUMBER}"
+name="app{number}"
 parent_dir="/opt/$name"
 pidfile="/var/run/${name}/pid"
 lockfile="/var/lock/subsys/$name"
-incantation="PORT={PORT} python $parent_dir/app.py $pidfile >/dev/null 2>&1 &"
+pre="host={host} port={port} pidfile=$pidfile"
+incantation="$pre python $parent_dir/app.py >/dev/null 2>&1 &"
 user="vagrant"
 
 start() {
