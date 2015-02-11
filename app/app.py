@@ -26,4 +26,4 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         file(sys.argv[1], 'w').write(str(os.getpid()))
 
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=int(os.environ['PORT']))
