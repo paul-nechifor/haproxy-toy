@@ -108,6 +108,11 @@ class Sample:
     start_time = -1
     duration = -1
 
+sample_fields = sorted(filter(
+    lambda x: not x.startswith('_'),
+    Sample.__dict__.keys(),
+))
+
 
 class User(Thread):
     def __init__(self, user_manager, id, n_requests):
@@ -134,23 +139,19 @@ class User(Thread):
         return sample
 
     def get_requests_url(self, balancer):
-        return 'http://172.17.1.%s/pow/2/20000' % (10 + balancer + 1)
+        return 'http://172.17.1.%s/pow/2/50000' % (10 + balancer + 1)
 
 
 class UserManager(object):
-    def __init__(self, hardware_maker, n_users=5, n_requests=100):
+    def __init__(self, hardware_maker, n_users=20, n_requests=1000):
         self.hw = hardware_maker
         self.n_users = n_users
         self.n_requests = n_requests
         self.users = []
 
     def save_results(self, filename):
-        fields = filter(
-            lambda x: not x.startswith('_'),
-            Sample.__dict__.keys(),
-        )
         with open(filename, 'wb') as csvfile:
-            writer = csv.DictWriter(csvfile, fields)
+            writer = csv.DictWriter(csvfile, sample_fields)
             for user in self.users:
                 for sample in user.samples:
                     writer.writerow(sample.__dict__)
