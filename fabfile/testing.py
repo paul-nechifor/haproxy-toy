@@ -2,6 +2,7 @@ from random import randint
 from threading import Thread
 from time import time
 from urllib2 import Request, urlopen
+import csv
 import os
 import tempfile
 
@@ -57,6 +58,7 @@ class HardwareMaker(object):
     def run_test(self):
         manager = UserManager(self)
         manager.start()
+        manager.save_results(root + '/out.csv')
 
     def setup_service(self, i_app, i_service):
         env.host_string = '172.17.2.%d' % (10 + i_app)
@@ -140,12 +142,23 @@ class UserManager(object):
         self.hw = hardware_maker
         self.n_users = n_users
         self.n_requests = n_requests
+        self.users = []
+
+    def save_results(self, filename):
+        fields = filter(
+            lambda x: not x.startswith('_'),
+            Sample.__dict__.keys(),
+        )
+        with open(filename, 'wb') as csvfile:
+            writer = csv.DictWriter(csvfile, fields)
+            for user in self.users:
+                for sample in user.samples:
+                    writer.writerow(sample.__dict__)
 
     def start(self):
-        users = []
         for i in xrange(self.n_users):
             user = User(self, i, self.n_requests)
             user.start()
-            users.append(user)
-        for user in users:
+            self.users.append(user)
+        for user in self.users:
             user.join()
