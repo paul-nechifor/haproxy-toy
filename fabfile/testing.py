@@ -2,13 +2,17 @@ from random import randint
 from threading import Thread
 from time import time
 from urllib2 import Request, urlopen
-import csv
 import os
+import pickle
+import sys
 import tempfile
 
 from fabric.api import local, sudo, env, put, lcd
 
 root = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+
+# Hack because of dumb pickle.
+sys.modules['fabfile.testing'] = sys.modules[__name__]
 
 
 class HardwareMaker(object):
@@ -58,7 +62,7 @@ class HardwareMaker(object):
     def run_test(self):
         manager = UserManager(self)
         manager.start()
-        manager.save_results(root + '/out.csv')
+        manager.save_results(root + '/out.pkl')
 
     def setup_service(self, i_app, i_service):
         env.host_string = '172.17.2.%d' % (10 + i_app)
@@ -108,11 +112,6 @@ class Sample:
     start_time = -1
     duration = -1
 
-sample_fields = sorted(filter(
-    lambda x: not x.startswith('_'),
-    Sample.__dict__.keys(),
-))
-
 
 class User(Thread):
     def __init__(self, user_manager, id, n_requests):
@@ -139,22 +138,25 @@ class User(Thread):
         return sample
 
     def get_requests_url(self, balancer):
-        return 'http://172.17.1.%s/pow/2/50000' % (10 + balancer + 1)
+        return 'http://172.17.1.%s/pow/2/1000' % (10 + balancer + 1)
+
+
+def load_samples(filename):
+    with open(filename, 'rb') as input_file:
+        return pickle.load(input_file)
 
 
 class UserManager(object):
-    def __init__(self, hardware_maker, n_users=20, n_requests=1000):
+    def __init__(self, hardware_maker, n_users=5, n_requests=1000):
         self.hw = hardware_maker
         self.n_users = n_users
         self.n_requests = n_requests
         self.users = []
 
     def save_results(self, filename):
-        with open(filename, 'wb') as csvfile:
-            writer = csv.DictWriter(csvfile, sample_fields)
-            for user in self.users:
-                for sample in user.samples:
-                    writer.writerow(sample.__dict__)
+        data = [x for u in self.users for x in u.samples]
+        with open(filename, 'wb') as output:
+            pickle.dump(data, output, -1)
 
     def start(self):
         for i in xrange(self.n_users):
