@@ -1,3 +1,4 @@
+from random import randint
 from threading import Thread
 from time import time
 from urllib2 import Request, urlopen
@@ -54,7 +55,8 @@ class HardwareMaker(object):
             self.setup_balancer(i + 1)
 
     def run_test(self):
-        pass
+        manager = UserManager(self)
+        manager.start()
 
     def setup_service(self, i_app, i_service):
         env.host_string = '172.17.2.%d' % (10 + i_app)
@@ -96,36 +98,55 @@ class HardwareMaker(object):
         os.remove(tmp)
 
 
+class Sample:
+    user = -1
+    balancer = -1
+    server = -1
+    service = -1
+    start_time = -1
+    duration = -1
+
+
 class User(Thread):
-    def __init__(self, n_requests):
+    def __init__(self, user_manager, id, n_requests):
         super(User, self).__init__()
+        self.manager = user_manager
+        self.id = id
         self.n_requests = n_requests
+        self.samples = []
 
     def run(self):
         for _ in xrange(self.n_requests):
             self.make_request()
 
     def make_request(self):
-        request = Request(self.make_request_url())
-        start = time()
+        sample = Sample()
+        sample.user = self.id
+        sample.balancer = randint(0, self.manager.hw.n_balancers - 1)
+        request = Request(self.make_request_url(sample.balancer))
+        sample.start_time = time()
         text = urlopen(request).read()
-        duration = time() - start
-        responder = text.split('\n', 1)[0]
-        print responder, duration
+        sample.duration = time() - sample.start_time
+        responder = text.split('\n', 1)[0].split(':')
+        sample.service = int(responder[1]) - 8000
+        sample.server = int(responder[0].split('.')[-1]) - 11
+        self.samples.append(sample)
+        print sample.user, sample.service, sample.duration
 
-    def make_request_url(self):
-        return 'http://172.17.1.11/pow/2/20000'
+    def make_request_url(self, balancer):
+        return 'http://172.17.1.%s/pow/2/20000' % (10 + balancer + 1)
 
 
-class Pounder(object):
-    def __init__(self, n_users=1, n_requests=1):
+class UserManager(object):
+    def __init__(self, hardware_maker, n_users=5, n_requests=100):
+        self.hw = hardware_maker
         self.n_users = n_users
         self.n_requests = n_requests
 
     def start(self):
         users = []
-        for _ in xrange(self.n_users):
-            user = User(self.n_requests)
+        for i in xrange(self.n_users):
+            user = User(self, i, self.n_requests)
             user.start()
             users.append(user)
         for user in users:

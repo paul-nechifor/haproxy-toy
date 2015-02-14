@@ -12,12 +12,10 @@ def setup(n_balancers='1', n_apps='1', n_services='1'):
     Brings up a certain server configuration. Don't forget to destroy the same
     configuration.
     """
-    test = HardwareMaker(int(n_balancers), int(n_apps), int(n_services))
-    test.run()
+    HardwareMaker(int(n_balancers), int(n_apps), int(n_services)).run()
 
 
 @task
 def destroy(n_balancers='1', n_apps='1'):
     """Destroys a certain server configuration."""
-    test = HardwareMaker(int(n_balancers), int(n_apps))
-    test.destroy()
+    HardwareMaker(int(n_balancers), int(n_apps)).destroy()
