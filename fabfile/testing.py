@@ -113,27 +113,25 @@ class User(Thread):
         self.manager = user_manager
         self.id = id
         self.n_requests = n_requests
-        self.samples = []
+        self.samples = None
 
     def run(self):
-        for _ in xrange(self.n_requests):
-            self.make_request()
+        self.samples = [self.make_sample() for _ in xrange(self.n_requests)]
 
-    def make_request(self):
+    def make_sample(self):
         sample = Sample()
         sample.user = self.id
         sample.balancer = randint(0, self.manager.hw.n_balancers - 1)
-        request = Request(self.make_request_url(sample.balancer))
+        request = Request(self.get_requests_url(sample.balancer))
         sample.start_time = time()
         text = urlopen(request).read()
         sample.duration = time() - sample.start_time
         responder = text.split('\n', 1)[0].split(':')
         sample.service = int(responder[1]) - 8000
         sample.server = int(responder[0].split('.')[-1]) - 11
-        self.samples.append(sample)
-        print sample.user, sample.service, sample.duration
+        return sample
 
-    def make_request_url(self, balancer):
+    def get_requests_url(self, balancer):
         return 'http://172.17.1.%s/pow/2/20000' % (10 + balancer + 1)
 
 
