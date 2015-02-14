@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from fabric.api import local, task, sudo, env, execute, put, lcd
+from fabric.api import local, task, sudo, env, put, lcd
 
 env.key_filename = '~/.vagrant.d/insecure_private_key'
 env.user = 'vagrant'
@@ -15,9 +15,9 @@ class Test(object):
         self.n_balancers = n_balancers
         self.n_apps = n_apps
         self.n_services = n_services
-        self.server_list = self.make_server_list()
+        self.server_list = self.get_server_list()
 
-    def make_server_list(self):
+    def get_server_list(self):
         list = []
         format = '    server app%ds%d 172.17.2.%d:%d check'
         for i in xrange(self.n_apps):
@@ -89,7 +89,7 @@ class Test(object):
         with lcd(root):
             put(local_path=tmp, remote_path='/tmp/haproxy.cfg')
             sudo("""
-                service haproxy stop 2>/dev/null || true
+                service haproxy stop >/dev/null || true
                 cp /tmp/haproxy.cfg /etc/haproxy/haproxy.cfg
                 service haproxy start
                 chkconfig haproxy on
